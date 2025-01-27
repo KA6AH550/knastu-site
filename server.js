@@ -1,3 +1,5 @@
+require('dotenv').config(); // Загружаем переменные окружения из .env файла
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -8,15 +10,12 @@ const PORT = 5000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // Для парсинга application/json
 
 // Строка подключения к MongoDB Atlas
-const mongoURI = 'mongodb+srv://bochleny2003:Lennyy20031@knastu.nescm.mongodb.net/knastu_webdite?retryWrites=true&w=majority&appName=Knastu';
-
-// Подключение к MongoDB
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    console.log('Успешно подключено к базе данных MongoDB Atlas');
+    console.log('Успешно подключено к базе данных MongoDB');
   })
   .catch((err) => {
     console.error('Ошибка подключения к базе данных:', err);
