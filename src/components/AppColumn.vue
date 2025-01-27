@@ -1,3 +1,4 @@
+
 <template>
   <div class="column">
     <h2 class="column-title">{{ title }}</h2>
