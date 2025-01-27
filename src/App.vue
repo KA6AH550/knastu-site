@@ -31,7 +31,7 @@ export default {
   },
   async created() {
     try {
-      const response = await fetch('http://localhost:5000/api/links');
+      const response = await fetch('https://knastu-site-production.up.railway.app/api/links');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
