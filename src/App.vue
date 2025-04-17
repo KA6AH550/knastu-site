@@ -62,6 +62,18 @@ export default {
   background-color: #ececec;
 }
 
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+  body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 20px;
+}
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
 .header {
   display: flex;
   align-items: center;
@@ -78,7 +90,7 @@ export default {
   gap: 20px;
   padding: 20px;
   padding-top: 90px;  
-  max-width: 1500px;
+  max-width: 1530px;
   margin: 0 auto;
 }
 

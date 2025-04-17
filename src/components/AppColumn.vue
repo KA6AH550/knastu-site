@@ -9,7 +9,12 @@
       class="column-image"
       loading="lazy"
     />
-    <div class="button-grid">
+    <div
+      :class="['button-grid', {
+        'flex-grid': ['Учебная деятельность', 'Университет', 'Документы'].includes(title),
+        'grid-layout': !['Учебная деятельность', 'Университет', 'Документы'].includes(title)
+      }]"
+    >
       <a
         v-for="(link, index) in links"
         :key="index"
@@ -27,21 +32,21 @@
 export default {
   props: {
     title: String,
-    links: Array
-  }
+    links: Array,
+  },
 };
 </script>
 
 <style scoped>
 .column {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.81);
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+  padding: 12px 20px 20px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-
+  box-sizing: border-box;
 }
 
 .column-title {
@@ -49,6 +54,7 @@ export default {
   font-weight: 600;
   color: #222;
   margin-bottom: 16px;
+  margin-top: 0;
 }
 
 .column-image {
@@ -60,13 +66,14 @@ export default {
   align-self: center;
 }
 
-.button-grid {
+/* Стили для колонок с flex (Учебная деятельность, Университет, Документы) */
+.flex-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.button-grid a {
+.flex-grid a {
   padding: 10px 14px;
   border: 1.8px solid #00aaff;
   border-radius: 8px;
@@ -79,7 +86,34 @@ export default {
   text-align: center;
 }
 
-.button-grid a:hover {
+.flex-grid a:hover {
+  background-color: #00aaff;
+  color: white;
+}
+
+/* Стили для колонок с grid (остальные) */
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.grid-layout a {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.8px solid #00aaff;
+  border-radius: 8px;
+  color: #00aaff;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: white;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.grid-layout a:hover {
   background-color: #00aaff;
   color: white;
 }
