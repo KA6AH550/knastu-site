@@ -1,4 +1,4 @@
-require('dotenv').config(); // Загружаем переменные окружения из .env файла
+require('dotenv').config();
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,18 +10,14 @@ const PORT = 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // Для парсинга application/json
+app.use(express.json());
 
-// Строка подключения к MongoDB Atlas
+// Подключение к MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('Успешно подключено к базе данных MongoDB');
-  })
-  .catch((err) => {
-    console.error('Ошибка подключения к базе данных:', err);
-  });
+  .then(() => console.log('Успешно подключено к базе данных MongoDB'))
+  .catch((err) => console.error('Ошибка подключения к базе данных:', err));
 
-// Схема и модель для ссылок
+// Обновленная схема для ссылок
 const LinkSchema = new mongoose.Schema({
   category: String,
   links: [
@@ -38,6 +34,7 @@ const LinkSchema = new mongoose.Schema({
     },
   ],
 });
+
 const Link = mongoose.model('Link', LinkSchema);
 
 // Маршрут для получения ссылок

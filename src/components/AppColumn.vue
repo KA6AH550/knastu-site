@@ -1,73 +1,86 @@
-
 <template>
-  <div class="column">
+  <section class="column">
     <h2 class="column-title">{{ title }}</h2>
-    <div class="column-buttons">
-      <button
+    <!-- Показывать картинку только если заголовок — "Учебная деятельность" -->
+    <img
+      v-if="title === 'Учебная деятельность'"
+      src="@/assets/teacher.svg"
+      alt="column image"
+      class="column-image"
+      loading="lazy"
+    />
+    <div class="button-grid">
+      <a
         v-for="(link, index) in links"
         :key="index"
-        class="link-button"
-        @click="openLink(link.url)"
+        :href="link.url"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         {{ link.text }}
-      </button>
+      </a>
     </div>
-  </div>
+  </section>
 </template>
 
 <script>
 export default {
   props: {
     title: String,
-    links: Array,
-  },
-  methods: {
-    openLink(url) {
-      window.open(url, "_blank"); // Открыть сайт в новой вкладке
-    },
-  },
+    links: Array
+  }
 };
 </script>
 
 <style scoped>
-/* Стили для столбца */
 .column {
-  flex: 1 1 auto;
-  min-width: 200px;
-  max-width: 300px;
+  background: #fff;
+  border-radius: 12px;
   padding: 20px;
-  border-radius: 10px;
-  background-color: #007bff;
-  text-align: center;
-  box-sizing: border-box;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  color: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
 }
 
 .column-title {
-  font-size: 1.5em;
-  margin-bottom: 15px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 16px;
 }
 
-.column-buttons {
+.column-image {
+  width: auto;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  align-self: center;
+}
+
+.button-grid {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.link-button {
-  padding: 10px 15px;
-  font-size: 1em;
-  color: #000000;
-  background-color: #fff;
-  border: 2px solid #007bff;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.button-grid a {
+  padding: 10px 14px;
+  border: 1.8px solid #00aaff;
+  border-radius: 8px;
+  color: #00aaff;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: white;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  text-align: center;
 }
 
-.link-button:hover {
-  background-color: #007bff;
-  color: #fff;
+.button-grid a:hover {
+  background-color: #00aaff;
+  color: white;
 }
 </style>

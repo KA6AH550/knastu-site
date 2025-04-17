@@ -1,81 +1,128 @@
 <template>
   <div id="app">
     <Header />
-    <main class="main">
+    <main class="grid-container">
       <Column
-        v-for="(column, index) in columns"
+        v-for="(column, index) in orderedColumns"
         :key="index"
         :title="column.title"
-        :links="column.links"
+        :links="getLinksByTitle(column.title)"
       />
     </main>
-    <!--<CommentForm />-->
   </div>
 </template>
 
 <script>
 import Header from "@/components/AppHeader.vue";
 import Column from "@/components/AppColumn.vue";
-//import CommentForm from "@/components/CommentForm.vue";
 
 export default {
   components: {
     Header,
     Column,
-    //CommentForm,
   },
   data() {
     return {
-      columns: [],
+      dynamicLinks: [],
+      orderedColumns: [
+        { title: "Учебная деятельность", class: "tall" },
+        { title: "Университет", class: "wide" },
+        { title: "Документы", class: "wide" },
+        { title: "Учебно-методическая деятельность" },
+        { title: "Социальная сфера" },
+        { title: "Наука и инновации" },
+        { title: "Трудоустройство" },
+      ],
     };
+  },
+  methods: {
+    getLinksByTitle(title) {
+      const match = this.dynamicLinks.find(item => item.category.trim() === title.trim());
+      return match ? match.links : [];
+    },
   },
   async created() {
     try {
-      const response = await fetch('https://knastu-site-production.up.railway.app/api/links');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      this.columns = data.map((item) => ({
-        title: item.category,
-        links: item.links,
-      }));
-    } catch (error) {
-      console.error('Ошибка при получении данных:', error);
+      const res = await fetch("https://knastu-site-production.up.railway.app/api/links");
+      this.dynamicLinks = await res.json();
+    } catch (err) {
+      console.error("Ошибка загрузки данных:", err);
     }
   },
 };
 </script>
 
 <style>
-.main {
+#app {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: url('@/assets/fon.svg') center center no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  background-color: #ececec;
+}
+
+.header {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: space-between; /* или center */
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 20px; /* чтобы контент не прилипал к краям */
+  overflow: hidden; /* важно */
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 равные колонки */
   gap: 20px;
   padding: 20px;
-  align-items: flex-start; /* Для выравнивания по верхнему краю */
+  padding-top: 90px;  
+  max-width: 1500px;
+  margin: 0 auto;
 }
 
-a {
-  color: inherit; /* Или ваш цвет */
-  text-decoration: none;
+/* Первая колонка (Учебная деятельность) — высокая, занимает 1 колонку и 2 строки */
+.grid-container .column:nth-child(1) {
+  grid-column: 1 / 2; /* Первая колонка */
+  grid-row: 1 / 3; /* Занимает 2 строки */
 }
 
-a:visited {
-  color: inherit;
+/* Вторая колонка (Университет) — широкая, занимает 3 колонки */
+.grid-container .column:nth-child(2) {
+  grid-column: 2 / 5; /* Колонки 2, 3, 4 */
+  grid-row: 1 / 2; /* Первая строка */
 }
 
-a:hover {
-  color: #007BFF;
-  text-decoration: underline;
+/* Третья колонка (Документы) — широкая, занимает 3 колонки */
+.grid-container .column:nth-child(3) {
+  grid-column: 2 / 5; /* Колонки 2, 3, 4 */
+  grid-row: 2 / 3; /* Вторая строка */
 }
 
-a:active {
-  color: inherit;
+/* Последние 4 колонки (4, 5, 6, 7) — в одном ряду, каждая занимает 1 колонку */
+.grid-container .column:nth-child(4),
+.grid-container .column:nth-child(5),
+.grid-container .column:nth-child(6),
+.grid-container .column:nth-child(7) {
+  grid-column: auto; /* Автоматическое размещение в колонке */
+  grid-row: 3 / 4; /* Третья строка */
 }
 
-body {
-  font-family: "radiance-ultralightitalic", sans-serif; /* Укажите основной шрифт и запасной */
+/* Убедимся, что колонки Университет и Документы растягиваются */
+.grid-container .column:nth-child(2),
+.grid-container .column:nth-child(3) {
+  width: 100%; /* Полная ширина доступного пространства */
+  box-sizing: border-box;
+}
+
+/* Общее правило для всех колонок */
+.grid-container .column {
+  box-sizing: border-box;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.81); /* белый с прозрачностью */
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>
