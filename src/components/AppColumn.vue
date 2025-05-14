@@ -2,11 +2,11 @@
   <section class="column">
     <div class="column-header">
       <h2 class="column-title">{{ title }}</h2>
-      <!-- Иконка подсказки только для "Учебная деятельность" -->
+      <!-- Показываем кнопку, только если есть tooltip -->
       <button
-        v-if="title === 'Учебная деятельность'"
+        v-if="tooltip"
         class="tooltip-button"
-        @click="showModal = true"
+        @click="showTooltipModal = true"
         aria-label="Открыть подсказку"
       >
         <svg
@@ -43,20 +43,30 @@
         },
       ]"
     >
-      <a
-        v-for="(link, index) in links"
-        :key="index"
-        :href="link.url"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ link.text }}
-      </a>
+      <template v-for="(link, index) in links" :key="index">
+        <!-- Если есть description, показываем кнопку для модалки -->
+        <button
+          v-if="link.description"
+          class="link-button"
+          @click="openLinkModal(link.description, link.text)"
+        >
+          {{ link.text }}
+        </button>
+        <!-- Иначе показываем ссылку -->
+        <a
+          v-else
+          :href="link.url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ link.text }}
+        </a>
+      </template>
     </div>
-    <!-- Модальное окно -->
-    <div v-if="showModal" class="modal-overlay" @click="showModal = false">
+    <!-- Модалка для tooltip -->
+    <div v-if="showTooltipModal && tooltip" class="modal-overlay" @click="showTooltipModal = false">
       <div class="modal-content" @click.stop>
-        <button class="modal-close" @click="showModal = false" aria-label="Закрыть">
+        <button class="modal-close" @click="showTooltipModal = false" aria-label="Закрыть">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -72,11 +82,31 @@
             <path d="m6 6 12 12" />
           </svg>
         </button>
-        <h3>Подсказка: Учебная деятельность</h3>
-        <p>
-          Раздел «Учебная деятельность» содержит информацию и ресурсы для организации учебного процесса.
-          Здесь вы найдете доступ к личному кабинету, расписанию занятий, учебным материалам, электронным платформам университета.
-        </p>
+        <h3>Подсказка: {{ title }}</h3>
+        <p>{{ tooltip }}</p>
+      </div>
+    </div>
+    <!-- Модалка для текста ссылки -->
+    <div v-if="showLinkModal && selectedLinkText" class="modal-overlay" @click="showLinkModal = false">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="showLinkModal = false" aria-label="Закрыть">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#212529"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+        <h3>{{ selectedLinkTitle }}</h3>
+        <p>{{ selectedLinkText }}</p>
       </div>
     </div>
   </section>
@@ -87,11 +117,25 @@ export default {
   props: {
     title: String,
     links: Array,
+    tooltip: String,
   },
   data() {
     return {
-      showModal: false,
+      showTooltipModal: false,
+      showLinkModal: false,
+      selectedLinkText: null,
+      selectedLinkTitle: null,
     };
+  },
+  methods: {
+    openLinkModal(description, text) {
+      this.selectedLinkText = description;
+      this.selectedLinkTitle = text;
+      this.showLinkModal = true;
+    },
+  },
+  created() {
+    console.log('Props:', this.title, this.tooltip, this.links); // Для отладки
   },
 };
 </script>
@@ -148,7 +192,8 @@ export default {
   gap: 10px;
 }
 
-.flex-grid a {
+.flex-grid a,
+.flex-grid .link-button {
   padding: 10px 14px;
   border: 1.8px solid #00aaff;
   border-radius: 8px;
@@ -161,7 +206,12 @@ export default {
   text-align: center;
 }
 
-.flex-grid a:hover {
+.flex-grid .link-button {
+  cursor: pointer;
+}
+
+.flex-grid a:hover,
+.flex-grid .link-button:hover {
   background-color: #00aaff;
   color: white;
 }
@@ -172,7 +222,8 @@ export default {
   gap: 10px;
 }
 
-.grid-layout a {
+.grid-layout a,
+.grid-layout .link-button {
   width: 100%;
   padding: 10px 14px;
   border: 1.8px solid #00aaff;
@@ -187,12 +238,16 @@ export default {
   box-sizing: border-box;
 }
 
-.grid-layout a:hover {
+.grid-layout .link-button {
+  cursor: pointer;
+}
+
+.grid-layout a:hover,
+.grid-layout .link-button:hover {
   background-color: #00aaff;
   color: white;
 }
 
-/* Стили для модального окна */
 .modal-overlay {
   position: fixed;
   top: 0;

@@ -7,6 +7,7 @@
         :key="index"
         :title="column.title"
         :links="getLinksByTitle(column.title)"
+        :tooltip="getTooltipByTitle(column.title)"
       />
     </main>
   </div>
@@ -40,11 +41,16 @@ export default {
       const match = this.dynamicLinks.find(item => item.category.trim() === title.trim());
       return match ? match.links : [];
     },
+    getTooltipByTitle(title) {
+      const match = this.dynamicLinks.find(item => item.category.trim() === title.trim());
+      return match ? match.tooltip : null;
+    },
   },
   async created() {
     try {
       const res = await fetch("https://knastu-site-production.up.railway.app/api/links");
       this.dynamicLinks = await res.json();
+      console.log('Загруженные данные:', this.dynamicLinks);
     } catch (err) {
       console.error("Ошибка загрузки данных:", err);
     }
@@ -63,76 +69,70 @@ export default {
 }
 
 html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-  }
-  body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+body {
   font-family: 'Roboto', sans-serif;
   font-size: 20px;
 }
-  *, *::before, *::after {
-    box-sizing: inherit;
-  }
+*, *::before, *::after {
+  box-sizing: inherit;
+}
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* или center */
+  justify-content: space-between;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 0 20px; /* чтобы контент не прилипал к краям */
-  overflow: hidden; /* важно */
+  padding: 0 20px;
+  overflow: hidden;
 }
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 равные колонки */
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   padding: 20px;
-  padding-top: 90px;  
+  padding-top: 90px;
   max-width: 1530px;
   margin: 0 auto;
 }
 
-/* Первая колонка (Учебная деятельность) — высокая, занимает 1 колонку и 2 строки */
 .grid-container .column:nth-child(1) {
-  grid-column: 1 / 2; /* Первая колонка */
-  grid-row: 1 / 3; /* Занимает 2 строки */
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
 }
 
-/* Вторая колонка (Университет) — широкая, занимает 3 колонки */
 .grid-container .column:nth-child(2) {
-  grid-column: 2 / 5; /* Колонки 2, 3, 4 */
-  grid-row: 1 / 2; /* Первая строка */
+  grid-column: 2 / 5;
+  grid-row: 1 / 2;
 }
 
-/* Третья колонка (Документы) — широкая, занимает 3 колонки */
 .grid-container .column:nth-child(3) {
-  grid-column: 2 / 5; /* Колонки 2, 3, 4 */
-  grid-row: 2 / 3; /* Вторая строка */
+  grid-column: 2 / 5;
+  grid-row: 2 / 3;
 }
 
-/* Последние 4 колонки (4, 5, 6, 7) — в одном ряду, каждая занимает 1 колонку */
 .grid-container .column:nth-child(4),
 .grid-container .column:nth-child(5),
 .grid-container .column:nth-child(6),
 .grid-container .column:nth-child(7) {
-  grid-column: auto; /* Автоматическое размещение в колонке */
-  grid-row: 3 / 4; /* Третья строка */
+  grid-column: auto;
+  grid-row: 3 / 4;
 }
 
-/* Убедимся, что колонки Университет и Документы растягиваются */
 .grid-container .column:nth-child(2),
 .grid-container .column:nth-child(3) {
-  width: 100%; /* Полная ширина доступного пространства */
+  width: 100%;
   box-sizing: border-box;
 }
 
-/* Общее правило для всех колонок */
 .grid-container .column {
   box-sizing: border-box;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.81); /* белый с прозрачностью */
+  background-color: rgba(255, 255, 255, 0.81);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
