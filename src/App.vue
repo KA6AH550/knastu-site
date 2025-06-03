@@ -29,24 +29,28 @@ export default {
     return {
       dynamicLinks: [],
       isModerator: false,
-      orderedColumns: [
-        { title: "Учебная деятельность", class: "tall" },
-        { title: "Университет", class: "wide" },
-        { title: "Документы", class: "wide" },
-        { title: "Учебно-методическая деятельность" },
-        { title: "Социальная сфера" },
-        { title: "Наука и инновации" },
-        { title: "Трудоустройство" },
-      ],
     };
+  },
+  computed: {
+    orderedColumns() {
+      return this.dynamicLinks.map(item => ({
+        title: item.category,
+        links: item.links || [],
+        tooltip: item.tooltip || null,
+      }));
+    },
   },
   methods: {
     getLinksByTitle(title) {
-      const match = this.dynamicLinks.find(item => item.category.trim() === title.trim());
+      const match = this.dynamicLinks.find(
+        item => item.category.trim() === title.trim()
+      );
       return match ? match.links : [];
     },
     getTooltipByTitle(title) {
-      const match = this.dynamicLinks.find(item => item.category.trim() === title.trim());
+      const match = this.dynamicLinks.find(
+        item => item.category.trim() === title.trim()
+      );
       return match ? match.tooltip : null;
     },
     toggleModerator() {
@@ -57,13 +61,14 @@ export default {
     try {
       const res = await fetch("https://knastu-site.onrender.com/api/links");
       this.dynamicLinks = await res.json();
-      console.log('Загруженные данные:', this.dynamicLinks);
+      console.log("Загруженные данные:", this.dynamicLinks);
     } catch (err) {
       console.error("Ошибка загрузки данных:", err);
     }
   },
 };
 </script>
+
 
 <style>
 #app {

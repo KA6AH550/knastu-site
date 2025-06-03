@@ -101,14 +101,21 @@ app.put('/api/links/:columnId/links/:linkIndex', async (req, res) => {
   try {
     const { text, url, description } = req.body;
     const column = await Link.findById(req.params.columnId);
+
     if (!column) {
       return res.status(404).json({ error: 'Колонка не найдена' });
     }
-    const linkIndex = req.params.linkIndex;
-    if (linkIndex >= column.links.length) {
+
+    const linkIndex = parseInt(req.params.linkIndex);
+    if (isNaN(linkIndex) || linkIndex >= column.links.length) {
       return res.status(404).json({ error: 'Ссылка не найдена' });
     }
-    column.links[linkIndex] = { ...column.links[linkIndex], text, url, description };
+
+    // Только обновление нужных полей
+    column.links[linkIndex].text = text;
+    column.links[linkIndex].url = url;
+    column.links[linkIndex].description = description;
+
     await column.save();
     res.json(column);
   } catch (err) {

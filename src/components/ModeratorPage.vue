@@ -9,30 +9,32 @@
         <button type="submit">Добавить колонку</button>
       </form>
     </section>
-    <section class="columns-list">
-      <div v-for="column in columns" :key="column._id" class="column-item">
-        <h3>{{ column.category }}</h3>
-        <p>{{ column.tooltip || 'Нет подсказки' }}</p>
-        <div class="links">
-          <div v-for="(link, index) in column.links" :key="index">
-            <p>{{ link.text }} - {{ link.url || link.description }}</p>
-            <button @click="editLink(column._id, index, link)">Редактировать</button>
-            <button @click="deleteLink(column._id, index)">Удалить</button>
-          </div>
-          <form @submit.prevent="addLink(column._id)">
-            <input v-model="newLink.text" placeholder="Текст ссылки" required />
-            <input v-model="newLink.url" placeholder="URL (необязательно)" />
-            <textarea v-model="newLink.description" placeholder="Описание (необязательно)"></textarea>
-            <button type="submit">Добавить ссылку</button>
-          </form>
-        </div>
-        <button @click="deleteColumn(column._id)">Удалить колонку</button>
-      </div>
+    <section class="columns-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Описание</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="column in columns" :key="column._id">
+            <td>{{ column.category }}</td>
+            <td>{{ column.tooltip || 'Нет подсказки' }}</td>
+            <td>
+              <button @click="openLinksModal(column)" class="edit-btn">Редактировать</button>
+              <button @click="deleteColumn(column._id)" class="delete-btn">Удалить</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </section>
-    <!-- Модальное окно для редактирования ссылки -->
-    <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
-      <div class="modal-content" @click.stop>
-        <button class="modal-close" @click="showEditModal = false" aria-label="Закрыть">
+
+    <!-- Модальное окно для управления ссылками -->
+    <div v-if="showLinksModal" class="modal-overlay" @click="closeLinksModal">
+      <div class="modal-content links-modal" @click.stop>
+        <button class="modal-close" @click="closeLinksModal" aria-label="Закрыть">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -44,15 +46,53 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
+            <path d="M18 6 L6 18" />
+            <path d="m6 6 l12 12" />
+          </svg>
+        </button>
+        <h3>Управление ссылками для "{{ selectedColumn.category }}"</h3>
+        <div class="links-list">
+          <div v-for="(link, index) in selectedColumn.links" :key="index" class="link-item">
+            <p>{{ link.text }} - {{ link.url || link.description }}</p>
+            <div class="link-actions">
+              <button @click="openEditLinkModal(link, index)" class="edit-btn">Редактировать</button>
+              <button @click="deleteLink(selectedColumn._id, index)" class="delete-btn">Удалить</button>
+            </div>
+          </div>
+          <form @submit.prevent="addLink(selectedColumn._id)">
+            <input v-model="newLink.text" placeholder="Текст ссылки" required />
+            <input v-model="newLink.url" placeholder="URL (необязательно)" />
+            <textarea v-model="newLink.description" placeholder="Описание (необязательно)"></textarea>
+            <button type="submit">Добавить ссылку</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно для редактирования ссылки -->
+    <div v-if="showEditLinkModal" class="modal-overlay" @click="showEditLinkModal = false">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="showEditLinkModal = false" aria-label="Закрыть">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#212529"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 L6 18" />
+            <path d="m6 6 l12 12" />
           </svg>
         </button>
         <h3>Редактировать ссылку</h3>
         <form @submit.prevent="saveEditedLink">
-          <input v-model="editLink.text" placeholder="Текст ссылки" required />
-          <input v-model="editLink.url" placeholder="URL" />
-          <textarea v-model="editLink.description" placeholder="Описание"></textarea>
+          <input v-model="editableLink.text" placeholder="Текст ссылки" required />
+          <input v-model="editableLink.url" placeholder="URL" />
+          <textarea v-model="editableLink.description" placeholder="Описание"></textarea>
           <button type="submit">Сохранить</button>
         </form>
       </div>
@@ -66,8 +106,10 @@ export default {
     return {
       columns: [], // Список колонок
       newColumn: { category: '', tooltip: '' }, // Новая колонка
-      newLink: { text: '', url: '', description: '' }, // Новая ссылка
-      showEditModal: false, // Флаг для модального окна
+      newLink: { text: '', url: '', description: '' }, // Новая ссылка для модального окна
+      showLinksModal: false, // Флаг для модального окна ссылок
+      selectedColumn: null, // Выбранная колонка для управления ссылками
+      showEditLinkModal: false, // Флаг для модального окна редактирования ссылки
       editableLink: { text: '', url: '', description: '' }, // Данные редактируемой ссылки
       editColumnId: null, // ID колонки для редактирования
       editLinkIndex: null, // Индекс редактируемой ссылки
@@ -107,6 +149,8 @@ export default {
         });
         this.newLink = { text: '', url: '', description: '' };
         await this.fetchColumns();
+        // Обновляем selectedColumn
+        this.selectedColumn = this.columns.find(col => col._id === columnId);
       } catch (err) {
         console.error('Ошибка добавления ссылки:', err);
       }
@@ -127,15 +171,26 @@ export default {
           method: 'DELETE',
         });
         await this.fetchColumns();
+        // Обновляем selectedColumn
+        this.selectedColumn = this.columns.find(col => col._id === columnId);
       } catch (err) {
         console.error('Ошибка удаления ссылки:', err);
       }
     },
-    editLink(columnId, linkIndex, link) {
-      this.editColumnId = columnId;
-      this.editLinkIndex = linkIndex;
+    openLinksModal(column) {
+      this.selectedColumn = { ...column };
+      this.showLinksModal = true;
+    },
+    closeLinksModal() {
+      this.showLinksModal = false;
+      this.selectedColumn = null;
+      this.newLink = { text: '', url: '', description: '' };
+    },
+    openEditLinkModal(link, index) {
       this.editableLink = { ...link };
-      this.showEditModal = true;
+      this.editColumnId = this.selectedColumn._id;
+      this.editLinkIndex = index;
+      this.showEditLinkModal = true;
     },
     async saveEditedLink() {
       try {
@@ -144,9 +199,11 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.editableLink),
         });
-        this.showEditModal = false;
+        this.showEditLinkModal = false;
         this.editableLink = { text: '', url: '', description: '' };
         await this.fetchColumns();
+        // Обновляем selectedColumn
+        this.selectedColumn = this.columns.find(col => col._id === this.editColumnId);
       } catch (err) {
         console.error('Ошибка сохранения ссылки:', err);
       }
@@ -165,18 +222,61 @@ export default {
   background-size: cover;
   background-attachment: fixed;
   background-color: #ececec;
+  min-height: 100vh;
 }
-.add-column,
-.columns-list {
+
+h1 {
+  text-align: center;
+  color: #212529;
   margin-bottom: 20px;
 }
-.column-item {
-  background: rgba(255, 255, 255, 0.81);
+
+.add-column {
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 20px;
+  margin-bottom: 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
+.add-column h2 {
+  margin-top: 0;
+  color: #212529;
+}
+
+.columns-table {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+thead {
+  background: #f5f5f5;
+}
+
+th {
+  text-align: left;
+  padding: 12px;
+  color: #212529;
+  font-weight: 600;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+  background: #f9f9f9;
+}
+
 input,
 textarea {
   width: 100%;
@@ -184,21 +284,53 @@ textarea {
   margin: 8px 0;
   border: 1px solid #ccc;
   border-radius: 8px;
+  font-size: 0.95em;
+  transition: border-color 0.3s ease;
 }
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #00aaff;
+  box-shadow: 0 0 0 2px rgba(0, 170, 255, 0.2);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+  max-height: 120px;
+}
+
 button {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1.8px solid #00aaff;
   border-radius: 8px;
   color: #00aaff;
   background-color: white;
   cursor: pointer;
-  margin: 4px;
+  font-size: 0.9em;
   transition: all 0.25s ease;
 }
+
 button:hover {
   background-color: #00aaff;
   color: white;
 }
+
+.edit-btn {
+  margin-right: 8px;
+}
+
+.delete-btn {
+  border-color: #ff4d4d;
+  color: #ff4d4d;
+}
+
+.delete-btn:hover {
+  background-color: #ff4d4d;
+  color: white;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -210,7 +342,9 @@ button:hover {
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  animation: fadeIn 0.3s ease;
 }
+
 .modal-content {
   background: white;
   border-radius: 12px;
@@ -218,9 +352,14 @@ button:hover {
   max-width: 500px;
   width: 90%;
   position: relative;
-  font-family: 'Roboto', sans-serif;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease;
 }
+
+.links-modal {
+  max-width: 600px;
+}
+
 .modal-close {
   position: absolute;
   top: 10px;
@@ -229,8 +368,70 @@ button:hover {
   border: none;
   cursor: pointer;
   padding: 4px;
+  transition: transform 0.2s ease;
 }
+
+.modal-close:hover {
+  transform: scale(1.2);
+}
+
 .modal-close:hover svg {
   stroke: #00aaff;
+}
+
+.links-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.link-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.link-item p {
+  margin: 0;
+  flex-grow: 1;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.link-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .moderator-page {
+    padding: 10px;
+  }
+
+  .add-column,
+  .columns-table {
+    padding: 15px;
+  }
+
+  th, td {
+    padding: 8px;
+    font-size: 0.9em;
+  }
+
+  .links-modal {
+    max-width: 90%;
+  }
 }
 </style>
