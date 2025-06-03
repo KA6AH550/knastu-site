@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <Header />
-    <main class="grid-container">
+    <Header @toggle-moderator="toggleModerator" />
+    <main v-if="!isModerator" class="grid-container">
       <Column
         v-for="(column, index) in orderedColumns"
         :key="index"
@@ -10,21 +10,25 @@
         :tooltip="getTooltipByTitle(column.title)"
       />
     </main>
+    <ModeratorPage v-else />
   </div>
 </template>
 
 <script>
 import Header from "@/components/AppHeader.vue";
 import Column from "@/components/AppColumn.vue";
+import ModeratorPage from "@/components/ModeratorPage.vue";
 
 export default {
   components: {
     Header,
     Column,
+    ModeratorPage,
   },
   data() {
     return {
       dynamicLinks: [],
+      isModerator: false,
       orderedColumns: [
         { title: "Учебная деятельность", class: "tall" },
         { title: "Университет", class: "wide" },
@@ -44,6 +48,9 @@ export default {
     getTooltipByTitle(title) {
       const match = this.dynamicLinks.find(item => item.category.trim() === title.trim());
       return match ? match.tooltip : null;
+    },
+    toggleModerator() {
+      this.isModerator = !this.isModerator;
     },
   },
   async created() {

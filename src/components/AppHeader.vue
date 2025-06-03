@@ -13,10 +13,10 @@
       <button>Социальная сфера</button>
       <button>Наука и инновации</button>
       <button>Трудоустройство</button>
+      <button @click="$emit('toggle-moderator')">Панель модератора</button>
     </nav>
   </header>
 </template>
-
 <script>
 export default {
   name: 'MainHeader',
