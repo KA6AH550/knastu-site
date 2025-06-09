@@ -48,7 +48,7 @@
         <button
           v-if="link.description"
           class="link-button"
-          @click="openLinkModal(link.description, link.text)"
+          @click="openLinkModal(link.description, link.text, link.additionalLinks)"
         >
           {{ link.text }}
         </button>
@@ -58,6 +58,7 @@
           :href="link.url"
           target="_blank"
           rel="noopener noreferrer"
+          class="link-button"
         >
           {{ link.text }}
         </a>
@@ -107,6 +108,18 @@
         </button>
         <h3>{{ selectedLinkTitle }}</h3>
         <p>{{ selectedLinkText }}</p>
+        <div v-if="additionalLinks && additionalLinks.length" class="modal-actions">
+          <a
+            v-for="(extraLink, index) in additionalLinks"
+            :key="index"
+            :href="extraLink.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="link-button"
+          >
+            {{ extraLink.text }}
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -125,12 +138,14 @@ export default {
       showLinkModal: false,
       selectedLinkText: null,
       selectedLinkTitle: null,
+      additionalLinks: [], // Добавляем для хранения дополнительных ссылок
     };
   },
   methods: {
-    openLinkModal(description, text) {
+    openLinkModal(description, text, extraLinks) {
       this.selectedLinkText = description;
       this.selectedLinkTitle = text;
+      this.additionalLinks = extraLinks || []; // Передаем и сохраняем additionalLinks
       this.showLinkModal = true;
     },
   },
@@ -192,39 +207,14 @@ export default {
   gap: 10px;
 }
 
-.flex-grid a,
-.flex-grid .link-button {
-  padding: 10px 14px;
-  border: 1.8px solid #00aaff;
-  border-radius: 8px;
-  color: #00aaff;
-  font-size: 14px;
-  font-weight: 500;
-  background-color: white;
-  text-decoration: none;
-  transition: all 0.25s ease;
-  text-align: center;
-}
-
-.flex-grid .link-button {
-  cursor: pointer;
-}
-
-.flex-grid a:hover,
-.flex-grid .link-button:hover {
-  background-color: #00aaff;
-  color: white;
-}
-
 .grid-layout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
 }
 
-.grid-layout a,
-.grid-layout .link-button {
-  width: 100%;
+/* Общие стили для .link-button */
+.link-button {
   padding: 10px 14px;
   border: 1.8px solid #00aaff;
   border-radius: 8px;
@@ -236,13 +226,32 @@ export default {
   text-align: center;
   transition: all 0.25s ease;
   box-sizing: border-box;
+  display: inline-block; /* Для корректного отображения как кнопки */
 }
 
-.grid-layout .link-button {
+.link-button:hover {
+  background-color: #00aaff;
+  color: white;
+}
+
+/* Специфичные стили для .flex-grid */
+.flex-grid .link-button {
   cursor: pointer;
 }
 
-.grid-layout a:hover,
+.flex-grid a.link-button:hover,
+.flex-grid .link-button:hover {
+  background-color: #00aaff;
+  color: white;
+}
+
+/* Специфичные стили для .grid-layout */
+.grid-layout .link-button {
+  width: 100%;
+  cursor: pointer;
+}
+
+.grid-layout a.link-button:hover,
 .grid-layout .link-button:hover {
   background-color: #00aaff;
   color: white;
@@ -283,7 +292,16 @@ export default {
   font-size: 16px;
   color: #333;
   line-height: 1.5;
-  margin: 0;
+  margin: 0 0 16px;
+}
+
+.modal-actions {
+  margin-top: 16px;
+}
+
+.modal-actions .link-button {
+  display: block; /* Каждая кнопка на новой строке */
+  margin-bottom: 10px; /* Отступ между кнопками */
 }
 
 .modal-close {

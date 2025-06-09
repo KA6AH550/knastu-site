@@ -23,13 +23,42 @@
             <td>{{ column.category }}</td>
             <td>{{ column.tooltip || 'Нет подсказки' }}</td>
             <td>
-              <button @click="openLinksModal(column)" class="edit-btn">Редактировать</button>
+              <button @click="openEditColumnModal(column)" class="edit-btn">Редактировать колонку</button>
+              <button @click="openLinksModal(column)" class="edit-btn">Редактировать ссылки</button>
               <button @click="deleteColumn(column._id)" class="delete-btn">Удалить</button>
             </td>
           </tr>
         </tbody>
       </table>
     </section>
+
+    <!-- Модальное окно для редактирования колонки -->
+    <div v-if="showEditColumnModal" class="modal-overlay" @click="closeEditColumnModal">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="closeEditColumnModal" aria-label="Закрыть">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#212529"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 L6 18" />
+            <path d="m6 6 l12 12" />
+          </svg>
+        </button>
+        <h3>Редактировать колонку</h3>
+        <form @submit.prevent="saveEditedColumn">
+          <input v-model="editableColumn.category" placeholder="Название колонки" required />
+          <textarea v-model="editableColumn.tooltip" placeholder="Подсказка (необязательно)"></textarea>
+          <button type="submit">Сохранить</button>
+        </form>
+      </div>
+    </div>
 
     <!-- Модальное окно для управления ссылками -->
     <div v-if="showLinksModal" class="modal-overlay" @click="closeLinksModal">
@@ -63,6 +92,16 @@
             <input v-model="newLink.text" placeholder="Текст ссылки" required />
             <input v-model="newLink.url" placeholder="URL (необязательно)" />
             <textarea v-model="newLink.description" placeholder="Описание (необязательно)"></textarea>
+            <!-- Поле для добавления additionalLinks -->
+            <div class="additional-links">
+              <h4>Дополнительные ссылки (для модального окна)</h4>
+              <div v-for="(extraLink, idx) in newLink.additionalLinks" :key="idx" class="additional-link-item">
+                <input v-model="extraLink.text" placeholder="Текст ссылки" required />
+                <input v-model="extraLink.url" placeholder="URL ссылки" required />
+                <button type="button" class="delete-btn" @click="removeAdditionalLink(idx)">Удалить</button>
+              </div>
+              <button type="button" class="add-btn" @click="addAdditionalLink">Добавить дополнительную ссылку</button>
+            </div>
             <button type="submit">Добавить ссылку</button>
           </form>
         </div>
@@ -70,9 +109,9 @@
     </div>
 
     <!-- Модальное окно для редактирования ссылки -->
-    <div v-if="showEditLinkModal" class="modal-overlay" @click="showEditLinkModal = false">
+    <div v-if="showEditLinkModal" class="modal-overlay" @click="closeEditLinkModal">
       <div class="modal-content" @click.stop>
-        <button class="modal-close" @click="showEditLinkModal = false" aria-label="Закрыть">
+        <button class="modal-close" @click="closeEditLinkModal" aria-label="Закрыть">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -93,6 +132,16 @@
           <input v-model="editableLink.text" placeholder="Текст ссылки" required />
           <input v-model="editableLink.url" placeholder="URL" />
           <textarea v-model="editableLink.description" placeholder="Описание"></textarea>
+          <!-- Поле для редактирования additionalLinks -->
+          <div class="additional-links">
+            <h4>Дополнительные ссылки (для модального окна)</h4>
+            <div v-for="(extraLink, idx) in editableLink.additionalLinks" :key="idx" class="additional-link-item">
+              <input v-model="extraLink.text" placeholder="Текст ссылки" required />
+              <input v-model="extraLink.url" placeholder="URL ссылки" required />
+              <button type="button" class="delete-btn" @click="removeEditableAdditionalLink(idx)">Удалить</button>
+            </div>
+            <button type="button" class="add-btn" @click="addEditableAdditionalLink">Добавить дополнительную ссылку</button>
+          </div>
           <button type="submit">Сохранить</button>
         </form>
       </div>
@@ -106,13 +155,15 @@ export default {
     return {
       columns: [], // Список колонок
       newColumn: { category: '', tooltip: '' }, // Новая колонка
-      newLink: { text: '', url: '', description: '' }, // Новая ссылка для модального окна
+      newLink: { text: '', url: '', description: '', additionalLinks: [] }, // Новая ссылка для модального окна
       showLinksModal: false, // Флаг для модального окна ссылок
       selectedColumn: null, // Выбранная колонка для управления ссылками
       showEditLinkModal: false, // Флаг для модального окна редактирования ссылки
-      editableLink: { text: '', url: '', description: '' }, // Данные редактируемой ссылки
+      editableLink: { text: '', url: '', description: '', additionalLinks: [] }, // Данные редактируемой ссылки
       editColumnId: null, // ID колонки для редактирования
       editLinkIndex: null, // Индекс редактируемой ссылки
+      showEditColumnModal: false, // Флаг для модального окна редактирования колонки
+      editableColumn: { category: '', tooltip: '' }, // Данные редактируемой колонки
     };
   },
   async created() {
@@ -147,7 +198,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.newLink),
         });
-        this.newLink = { text: '', url: '', description: '' };
+        this.newLink = { text: '', url: '', description: '', additionalLinks: [] };
         await this.fetchColumns();
         // Обновляем selectedColumn
         this.selectedColumn = this.columns.find(col => col._id === columnId);
@@ -184,30 +235,94 @@ export default {
     closeLinksModal() {
       this.showLinksModal = false;
       this.selectedColumn = null;
-      this.newLink = { text: '', url: '', description: '' };
+      this.newLink = { text: '', url: '', description: '', additionalLinks: [] };
     },
     openEditLinkModal(link, index) {
-      this.editableLink = { ...link };
+      this.editableLink = { ...link, additionalLinks: link.additionalLinks || [] };
       this.editColumnId = this.selectedColumn._id;
       this.editLinkIndex = index;
       this.showEditLinkModal = true;
     },
-    async saveEditedLink() {
-      try {
-        await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}/links/${this.editLinkIndex}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.editableLink),
-        });
-        this.showEditLinkModal = false;
-        this.editableLink = { text: '', url: '', description: '' };
-        await this.fetchColumns();
-        // Обновляем selectedColumn
-        this.selectedColumn = this.columns.find(col => col._id === this.editColumnId);
-      } catch (err) {
-        console.error('Ошибка сохранения ссылки:', err);
-      }
+    closeEditLinkModal() {
+      this.showEditLinkModal = false;
+      this.editableLink = { text: '', url: '', description: '', additionalLinks: [] };
     },
+    async saveEditedLink() {
+  try {
+    // Логируем, что отправляем
+    console.log('Отправляемые данные ссылки:', this.editableLink);
+    const response = await fetch(`http://localhost:5000/api/links/${this.editColumnId}/links/${this.editLinkIndex}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(this.editableLink),
+    });
+    if (!response.ok) {
+      throw new Error('Ошибка сервера: ' + response.status);
+    }
+    this.showEditLinkModal = false;
+    this.editableLink = { text: '', url: '', description: '', additionalLinks: [] };
+    await this.fetchColumns();
+    // Обновляем selectedColumn
+    this.selectedColumn = this.columns.find(col => col._id === this.editColumnId);
+  } catch (err) {
+    console.error('Ошибка сохранения ссылки:', err);
+    alert('Не удалось сохранить ссылку: ' + err.message);
+  }
+},
+    addAdditionalLink() {
+      this.newLink.additionalLinks.push({ text: '', url: '' });
+    },
+    removeAdditionalLink(index) {
+      this.newLink.additionalLinks.splice(index, 1);
+    },
+    addEditableAdditionalLink() {
+      this.editableLink.additionalLinks.push({ text: '', url: '' });
+    },
+    removeEditableAdditionalLink(index) {
+      this.editableLink.additionalLinks.splice(index, 1);
+    },
+    openEditColumnModal(column) {
+  this.editableColumn = {
+    category: column.category,
+    tooltip: column.tooltip || '',
+    links: column.links || []
+  };
+  this.editColumnId = column._id;
+  this.showEditColumnModal = true;
+},
+    closeEditColumnModal() {
+      this.showEditColumnModal = false;
+      this.editableColumn = { category: '', tooltip: '' };
+      this.editColumnId = null;
+    },
+    async saveEditedColumn() {
+  try {
+    // Логируем, что отправляем
+    console.log('Отправляемые данные колонки:', {
+      category: this.editableColumn.category,
+      tooltip: this.editableColumn.tooltip,
+      links: this.editableColumn.links
+    });
+    const response = await fetch(`http://localhost:5000/api/links/${this.editColumnId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: this.editableColumn.category,
+        tooltip: this.editableColumn.tooltip,
+        links: this.editableColumn.links || []
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Ошибка сервера: ' + response.status);
+    }
+    this.showEditColumnModal = false;
+    this.editableColumn = { category: '', tooltip: '' };
+    await this.fetchColumns();
+  } catch (err) {
+    console.error('Ошибка сохранения колонки:', err);
+    alert('Не удалось сохранить колонку: ' + err.message);
+  }
+},
   },
 };
 </script>
@@ -331,6 +446,17 @@ button:hover {
   color: white;
 }
 
+.add-btn {
+  border-color: #28a745;
+  color: #28a745;
+  margin: 8px 0;
+}
+
+.add-btn:hover {
+  background-color: #28a745;
+  color: white;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -405,6 +531,30 @@ button:hover {
   gap: 8px;
 }
 
+.additional-links {
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.additional-links h4 {
+  margin: 0 0 10px;
+  font-size: 1em;
+  color: #212529;
+}
+
+.additional-link-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.additional-link-item input {
+  flex: 1;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -432,6 +582,15 @@ button:hover {
 
   .links-modal {
     max-width: 90%;
+  }
+
+  .additional-link-item {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .additional-link-item input {
+    width: 100%;
   }
 }
 </style>

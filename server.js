@@ -79,15 +79,37 @@ app.post('/api/links', async (req, res) => {
   }
 });
 
-// Добавление ссылки в колонку
-app.post('/api/links/:columnId/links', async (req, res) => {
+// Обновление колонки
+app.put('/api/links/:columnId', async (req, res) => {
   try {
-    const { text, url, description } = req.body;
+    console.log('Полученные данные для обновления колонки:', req.body); // Для отладки
+    const { category, tooltip, links } = req.body;
     const column = await Link.findById(req.params.columnId);
     if (!column) {
       return res.status(404).json({ error: 'Колонка не найдена' });
     }
-    column.links.push({ text, url, description });
+    if (category) column.category = category;
+    if (tooltip) column.tooltip = tooltip;
+    if (links) column.links = links; // Обновляем links, если переданы
+    await column.save();
+    res.json(column);
+  } catch (err) {
+    console.error('Ошибка обновления колонки:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+
+
+// Добавление ссылки в колонку
+app.post('/api/links/:columnId/links', async (req, res) => {
+  try {
+    const { text, url, description, additionalLinks } = req.body;
+    const column = await Link.findById(req.params.columnId);
+    if (!column) {
+      return res.status(404).json({ error: 'Колонка не найдена' });
+    }
+    column.links.push({ text, url, description, additionalLinks });
     await column.save();
     res.json(column);
   } catch (err) {
@@ -99,9 +121,9 @@ app.post('/api/links/:columnId/links', async (req, res) => {
 // Редактирование ссылки
 app.put('/api/links/:columnId/links/:linkIndex', async (req, res) => {
   try {
-    const { text, url, description } = req.body;
+    const { text, url, description, additionalLinks } = req.body;
+    console.log('Данные для редактирования:', req.body); // Для отладки
     const column = await Link.findById(req.params.columnId);
-
     if (!column) {
       return res.status(404).json({ error: 'Колонка не найдена' });
     }
@@ -111,10 +133,27 @@ app.put('/api/links/:columnId/links/:linkIndex', async (req, res) => {
       return res.status(404).json({ error: 'Ссылка не найдена' });
     }
 
-    // Только обновление нужных полей
-    column.links[linkIndex].text = text;
-    column.links[linkIndex].url = url;
-    column.links[linkIndex].description = description;
+    // Проверяем, что текст обязателен
+    if (!text) {
+      return res.status(400).json({ error: 'Текст ссылки обязателен' });
+    }
+
+    // Проверяем дополнительные ссылки
+    if (additionalLinks && Array.isArray(additionalLinks)) {
+      for (const link of additionalLinks) {
+        if (!link.text || !link.url) {
+          return res.status(400).json({ error: 'Текст и URL обязательны для дополнительных ссылок' });
+        }
+      }
+    }
+
+    // Обновляем ссылку
+    column.links[linkIndex] = {
+      text: text,
+      url: url || '', // Если url не передан, используем пустую строку
+      description: description || '', // Если description не передан, используем пустую строку
+      additionalLinks: additionalLinks || [] // Используем переданные additionalLinks или пустой массив
+    };
 
     await column.save();
     res.json(column);
