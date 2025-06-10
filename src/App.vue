@@ -59,7 +59,7 @@ export default {
   },
   async created() {
     try {
-      const res = await fetch("http://localhost:5000/api/links");
+      const res = await fetch("https://knastu-site.onrender.com/api/links");
       this.dynamicLinks = await res.json();
       console.log("Загруженные данные:", this.dynamicLinks);
     } catch (err) {

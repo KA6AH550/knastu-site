@@ -251,7 +251,7 @@ export default {
   try {
     // Логируем, что отправляем
     console.log('Отправляемые данные ссылки:', this.editableLink);
-    const response = await fetch(`http://localhost:5000/api/links/${this.editColumnId}/links/${this.editLinkIndex}`, {
+    const response = await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}/links/${this.editLinkIndex}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(this.editableLink),
@@ -303,7 +303,7 @@ export default {
       tooltip: this.editableColumn.tooltip,
       links: this.editableColumn.links
     });
-    const response = await fetch(`http://localhost:5000/api/links/${this.editColumnId}`, {
+    const response = await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
