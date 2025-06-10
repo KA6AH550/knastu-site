@@ -25,7 +25,7 @@
             <td>
               <button @click="openEditColumnModal(column)" class="edit-btn">Редактировать колонку</button>
               <button @click="openLinksModal(column)" class="edit-btn">Редактировать ссылки</button>
-              <button @click="deleteColumn(column._id)" class="delete-btn">Удалить</button>
+              <button @click="confirmDeleteColumn(column._id, column.category)" class="delete-btn">Удалить</button>
             </td>
           </tr>
         </tbody>
@@ -57,6 +57,34 @@
           <textarea v-model="editableColumn.tooltip" placeholder="Подсказка (необязательно)"></textarea>
           <button type="submit">Сохранить</button>
         </form>
+      </div>
+    </div>
+
+    <!-- Модальное окно для подтверждения удаления колонки -->
+    <div v-if="showDeleteConfirmModal" class="modal-overlay" @click="closeDeleteConfirmModal">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="closeDeleteConfirmModal" aria-label="Закрыть">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#212529"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 L6 18" />
+            <path d="m6 6 l12 12" />
+          </svg>
+        </button>
+        <h3>Подтверждение удаления</h3>
+        <p>Вы уверены, что хотите удалить колонку "{{ columnToDeleteName }}"?</p>
+        <div class="modal-actions">
+          <button @click="closeDeleteConfirmModal" class="cancel-btn">Отмена</button>
+          <button @click="deleteColumnConfirmed" class="delete-btn">Удалить</button>
+        </div>
       </div>
     </div>
 
@@ -164,6 +192,9 @@ export default {
       editLinkIndex: null, // Индекс редактируемой ссылки
       showEditColumnModal: false, // Флаг для модального окна редактирования колонки
       editableColumn: { category: '', tooltip: '' }, // Данные редактируемой колонки
+      showDeleteConfirmModal: false, // Флаг для модального окна подтверждения удаления
+      columnToDeleteId: null, // ID колонки для удаления
+      columnToDeleteName: '' // Название колонки для отображения в модальном окне
     };
   },
   async created() {
@@ -206,14 +237,26 @@ export default {
         console.error('Ошибка добавления ссылки:', err);
       }
     },
-    async deleteColumn(columnId) {
+    confirmDeleteColumn(columnId, columnName) {
+      this.columnToDeleteId = columnId;
+      this.columnToDeleteName = columnName;
+      this.showDeleteConfirmModal = true;
+    },
+    closeDeleteConfirmModal() {
+      this.showDeleteConfirmModal = false;
+      this.columnToDeleteId = null;
+      this.columnToDeleteName = '';
+    },
+    async deleteColumnConfirmed() {
       try {
-        await fetch(`https://knastu-site.onrender.com/api/links/${columnId}`, {
+        await fetch(`https://knastu-site.onrender.com/api/links/${this.columnToDeleteId}`, {
           method: 'DELETE',
         });
+        this.closeDeleteConfirmModal();
         await this.fetchColumns();
       } catch (err) {
         console.error('Ошибка удаления колонки:', err);
+        this.closeDeleteConfirmModal();
       }
     },
     async deleteLink(columnId, linkIndex) {
@@ -248,27 +291,27 @@ export default {
       this.editableLink = { text: '', url: '', description: '', additionalLinks: [] };
     },
     async saveEditedLink() {
-  try {
-    // Логируем, что отправляем
-    console.log('Отправляемые данные ссылки:', this.editableLink);
-    const response = await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}/links/${this.editLinkIndex}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(this.editableLink),
-    });
-    if (!response.ok) {
-      throw new Error('Ошибка сервера: ' + response.status);
-    }
-    this.showEditLinkModal = false;
-    this.editableLink = { text: '', url: '', description: '', additionalLinks: [] };
-    await this.fetchColumns();
-    // Обновляем selectedColumn
-    this.selectedColumn = this.columns.find(col => col._id === this.editColumnId);
-  } catch (err) {
-    console.error('Ошибка сохранения ссылки:', err);
-    alert('Не удалось сохранить ссылку: ' + err.message);
-  }
-},
+      try {
+        // Логируем, что отправляем
+        console.log('Отправляемые данные ссылки:', this.editableLink);
+        const response = await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}/links/${this.editLinkIndex}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.editableLink),
+        });
+        if (!response.ok) {
+          throw new Error('Ошибка сервера: ' + response.status);
+        }
+        this.showEditLinkModal = false;
+        this.editableLink = { text: '', url: '', description: '', additionalLinks: [] };
+        await this.fetchColumns();
+        // Обновляем selectedColumn
+        this.selectedColumn = this.columns.find(col => col._id === this.editColumnId);
+      } catch (err) {
+        console.error('Ошибка сохранения ссылки:', err);
+        alert('Не удалось сохранить ссылку: ' + err.message);
+      }
+    },
     addAdditionalLink() {
       this.newLink.additionalLinks.push({ text: '', url: '' });
     },
@@ -282,47 +325,47 @@ export default {
       this.editableLink.additionalLinks.splice(index, 1);
     },
     openEditColumnModal(column) {
-  this.editableColumn = {
-    category: column.category,
-    tooltip: column.tooltip || '',
-    links: column.links || []
-  };
-  this.editColumnId = column._id;
-  this.showEditColumnModal = true;
-},
+      this.editableColumn = {
+        category: column.category,
+        tooltip: column.tooltip || '',
+        links: column.links || []
+      };
+      this.editColumnId = column._id;
+      this.showEditColumnModal = true;
+    },
     closeEditColumnModal() {
       this.showEditColumnModal = false;
       this.editableColumn = { category: '', tooltip: '' };
       this.editColumnId = null;
     },
     async saveEditedColumn() {
-  try {
-    // Логируем, что отправляем
-    console.log('Отправляемые данные колонки:', {
-      category: this.editableColumn.category,
-      tooltip: this.editableColumn.tooltip,
-      links: this.editableColumn.links
-    });
-    const response = await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        category: this.editableColumn.category,
-        tooltip: this.editableColumn.tooltip,
-        links: this.editableColumn.links || []
-      }),
-    });
-    if (!response.ok) {
-      throw new Error('Ошибка сервера: ' + response.status);
-    }
-    this.showEditColumnModal = false;
-    this.editableColumn = { category: '', tooltip: '' };
-    await this.fetchColumns();
-  } catch (err) {
-    console.error('Ошибка сохранения колонки:', err);
-    alert('Не удалось сохранить колонку: ' + err.message);
-  }
-},
+      try {
+        // Логируем, что отправляем
+        console.log('Отправляемые данные колонки:', {
+          category: this.editableColumn.category,
+          tooltip: this.editableColumn.tooltip,
+          links: this.editableColumn.links
+        });
+        const response = await fetch(`https://knastu-site.onrender.com/api/links/${this.editColumnId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: this.editableColumn.category,
+            tooltip: this.editableColumn.tooltip,
+            links: this.editableColumn.links || []
+          }),
+        });
+        if (!response.ok) {
+          throw new Error('Ошибка сервера: ' + response.status);
+        }
+        this.showEditColumnModal = false;
+        this.editableColumn = { category: '', tooltip: '' };
+        await this.fetchColumns();
+      } catch (err) {
+        console.error('Ошибка сохранения колонки:', err);
+        alert('Не удалось сохранить колонку: ' + err.message);
+      }
+    },
   },
 };
 </script>
@@ -446,6 +489,17 @@ button:hover {
   color: white;
 }
 
+.cancel-btn {
+  border-color: #6c757d;
+  color: #6c757d;
+  margin-right: 10px;
+}
+
+.cancel-btn:hover {
+  background-color: #6c757d;
+  color: white;
+}
+
 .add-btn {
   border-color: #28a745;
   color: #28a745;
@@ -503,6 +557,13 @@ button:hover {
 
 .modal-close:hover svg {
   stroke: #00aaff;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
 }
 
 .links-list {
