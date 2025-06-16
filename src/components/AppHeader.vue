@@ -1,26 +1,30 @@
 <template>
   <header class="main-header">
     <div class="logo-block">
-      <img src="@/assets/logo.svg" alt="Логотип" class="logo-icon" />
-      <img src="@/assets/knastu.svg" alt="Кнагу ONBOARDING" class="logo-text" />
+      <!-- Логотип как router-link -->
+      <router-link to="/">
+        <img src="@/assets/logo.svg" alt="Логотип КнАГУ" class="logo-image" />
+        <img src="@/assets/knastu.svg" alt="Кнагу ONBOARDING" class="logo-text" />
+      </router-link>
     </div>
     <nav class="nav-buttons">
-      <button>Главная</button>
-      <button>Учебная деятельность</button>
-      <button>Университет</button>
-      <button>Документы</button>
-      <button>Учебно-методическая деятельность</button>
-      <button>Социальная сфера</button>
-      <button>Наука и инновации</button>
-      <button>Трудоустройство</button>
-      <button @click="$emit('toggle-moderator')">Панель модератора</button>
+      <a href="https://knastu.ru/" class="nav-link">Главная</a>
+      <a href="https://knastu.ru/teachers" class="nav-link">Учебная деятельность</a>
+      <a href="https://knastu.ru/university" class="nav-link">Университет</a>
+      <a href="https://knastu.ru/university/quality_management" class="nav-link">Документы</a>
+      <a href="https://knastu.ru/page/1607" class="nav-link">Учебно-методическая деятельность</a>
+      <a href="https://knastu.ru/social" class="nav-link">Социальная сфера</a>
+      <a href="https://knastu.ru/science" class="nav-link">Наука и инновации</a>
+      <a href="https://knastu.ru/employees/job" class="nav-link">Трудоустройство</a>
     </nav>
   </header>
 </template>
+
 <script>
 export default {
   name: 'MainHeader',
-};
+  emits: ['toggle-moderator']
+}
 </script>
 
 <style scoped>
@@ -80,6 +84,7 @@ body {
   display: none; /* Для Chrome, Safari */
 }
 
+.nav-buttons .nav-link,
 .nav-buttons button {
   height: 51px;
   padding: 0 12px;
@@ -92,15 +97,20 @@ body {
   color: #212529;
   cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
   transition: color 0.2s ease;
 }
 
+.nav-buttons .nav-link:hover,
 .nav-buttons button:hover {
-  color: #00aaff;
+  color: #000000; /* Черный цвет при наведении для всех кнопок */
 }
 
 /* Адаптивность для экранов меньше 1200px */
 @media (max-width: 1200px) {
+  .nav-buttons .nav-link,
   .nav-buttons button {
     font-size: 13px;
     padding: 0 8px;
@@ -118,6 +128,7 @@ body {
     gap: 8px;
   }
 
+  .nav-buttons .nav-link,
   .nav-buttons button {
     font-size: 12px;
     padding: 0 6px;

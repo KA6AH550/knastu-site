@@ -1,6 +1,7 @@
 <template>
   <div class="moderator-page">
     <h1>Панель модератора</h1>
+    <button @click="goToHome">Вернуться на онбординг</button>
     <section class="add-column">
       <h2>Добавить новую колонку</h2>
       <form @submit.prevent="addColumn">
@@ -179,6 +180,7 @@
 
 <script>
 export default {
+  
   data() {
     return {
       columns: [], // Список колонок
@@ -366,6 +368,9 @@ export default {
         alert('Не удалось сохранить колонку: ' + err.message);
       }
     },
+    goToHome() {
+      this.$router.push('/');
+    },
   },
 };
 </script>
@@ -374,7 +379,7 @@ export default {
 .moderator-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 100px 20px 40px; /* верхний отступ под фиксированный Header */
   font-family: 'Roboto', sans-serif;
   background: url('@/assets/fon.svg') center center no-repeat;
   background-size: cover;
@@ -389,14 +394,32 @@ h1 {
   margin-bottom: 20px;
 }
 
+.back-btn {
+  display: block;
+  margin: 0 auto 40px;
+  padding: 10px 20px;
+  border: 2px solid #00aaff;
+  border-radius: 8px;
+  color: #00aaff;
+  background-color: white;
+  cursor: pointer;
+  font-size: 1em;
+  transition: all 0.25s ease;
+  margin-bottom: 60px; /* Было 40px */
+}
+.back-btn:hover {
+  background-color: #00aaff;
+  color: white;
+}
+
 .add-column {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
 }
-
 .add-column h2 {
   margin-top: 0;
   color: #212529;
@@ -477,7 +500,9 @@ button:hover {
 
 .edit-btn {
   margin-right: 8px;
+  margin-bottom: 8px; /* отступ снизу */
 }
+
 
 .delete-btn {
   border-color: #ff4d4d;
@@ -554,7 +579,6 @@ button:hover {
 .modal-close:hover {
   transform: scale(1.2);
 }
-
 .modal-close:hover svg {
   stroke: #00aaff;
 }
@@ -589,7 +613,7 @@ button:hover {
 
 .link-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .additional-links {
@@ -628,7 +652,7 @@ button:hover {
 
 @media (max-width: 768px) {
   .moderator-page {
-    padding: 10px;
+    padding: 80px 10px 20px;
   }
 
   .add-column,

@@ -317,4 +317,18 @@ export default {
 .modal-close:hover svg {
   stroke: #00aaff;
 }
+.modal-content p {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  white-space: pre-line; /* Добавляем для сохранения переносов строк */
+}
+.modal-content .description {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  white-space: pre-line; /* Переносы строк для description */
+}
 </style>
